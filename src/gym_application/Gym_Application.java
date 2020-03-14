@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package gym_application;
+import gym_application.Login;
 
 /**
  *
@@ -15,7 +16,8 @@ public class Gym_Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
+        Login login = new Login();
+        login.setVisible(true);
     }
     
 }
