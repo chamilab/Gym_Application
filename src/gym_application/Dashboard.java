@@ -5,13 +5,22 @@
  */
 package gym_application;
 
-import java.awt.Color;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.util.converter.LocalDateTimeStringConverter;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -25,17 +34,19 @@ public class Dashboard extends javax.swing.JFrame {
     private PreparedStatement pst;
     private final Connection conn;
     private ResultSet rs;
+    private int data = 0;
 
     public Dashboard() {
+
         initComponents();
         conn = DbConnect.DbConnect();
         try {
-            String Sql = "SELECT CUSTOMER_CODE FROM gym_customer ORDER BY CUSTOMER_ID DESC LIMIT 1";
+            String Sql = "SELECT CUSTOMER_CODE FROM gym_customer ORDER BY CUSTOMER_CODE DESC LIMIT 1";
             pst = conn.prepareStatement(Sql);
             rs = pst.executeQuery();
             if (rs.next()) {
                 String old_no = rs.getString("CUSTOMER_CODE");
-                String hit_no = old_no.substring(0,4);
+                String hit_no = old_no.substring(0, 4);
                 Integer new_no = Integer.parseInt(old_no.substring(2)) + 1;
                 System.out.print(new_no + 1);
                 System.out.print(hit_no);
@@ -47,6 +58,21 @@ public class Dashboard extends javax.swing.JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e);
         }
+
+        try {
+            String Sql = "SELECT *FROM gym_customer";
+            pst = conn.prepareStatement(Sql);
+            rs = pst.executeQuery();
+            while (rs.next()) {
+                select_userID.addItem(rs.getString("CUSTOMER_CODE"));
+            }
+//            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(Dashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        jXDatePicker2.setFormats("yyyy-MM-dd");
+        jXDatePicker1.setFormats("yyyy-MM-dd");
+        loadpaymentDetails();
     }
 
     /**
@@ -68,7 +94,12 @@ public class Dashboard extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         tab_home = new javax.swing.JTabbedPane();
         panel_home = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jCheckBox1 = new javax.swing.JCheckBox();
+        jCheckBox2 = new javax.swing.JCheckBox();
+        jTextField1 = new javax.swing.JTextField();
+        jButton2 = new javax.swing.JButton();
         panel_add_user = new javax.swing.JPanel();
         lbl_name = new javax.swing.JLabel();
         lbl_address = new javax.swing.JLabel();
@@ -79,7 +110,6 @@ public class Dashboard extends javax.swing.JFrame {
         txt_name = new javax.swing.JTextField();
         txt_address = new javax.swing.JTextField();
         txt_contact = new javax.swing.JTextField();
-        date_reg = new com.toedter.calendar.JDateChooser();
         txt_weight = new javax.swing.JTextField();
         txt_height = new javax.swing.JTextField();
         btn_save = new javax.swing.JButton();
@@ -88,6 +118,8 @@ public class Dashboard extends javax.swing.JFrame {
         lbl_userCode = new javax.swing.JLabel();
         label_validate_contact_No = new javax.swing.JLabel();
         lbl_customer_code_name = new javax.swing.JLabel();
+        panel_report = new javax.swing.JPanel();
+        panel_employee = new javax.swing.JPanel();
         panel_payment = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         select_userID = new javax.swing.JComboBox<>();
@@ -96,13 +128,14 @@ public class Dashboard extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         txt_contact_no = new javax.swing.JTextField();
         lbl_last_pay_date = new javax.swing.JLabel();
-        date_last_pay = new com.toedter.calendar.JDateChooser();
         lbl_pay_amount = new javax.swing.JLabel();
         txt_pay_amount = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         btn_reset_pay = new javax.swing.JButton();
-        panel_report = new javax.swing.JPanel();
-        panel_employee = new javax.swing.JPanel();
+        lblPayAmount = new javax.swing.JLabel();
+        jXDatePicker1 = new org.jdesktop.swingx.JXDatePicker();
+        jXDatePicker2 = new org.jdesktop.swingx.JXDatePicker();
+        lbl_last_pay_date1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Dashboard");
@@ -111,40 +144,55 @@ public class Dashboard extends javax.swing.JFrame {
 
         lbl_dashboard.setBackground(new java.awt.Color(168, 132, 201));
 
+        btn_home.setBackground(new java.awt.Color(52, 73, 94));
         btn_home.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btn_home.setForeground(new java.awt.Color(255, 255, 255));
         btn_home.setText("Home");
+        btn_home.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         btn_home.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn_homeActionPerformed(evt);
             }
         });
 
+        btn_new_user.setBackground(new java.awt.Color(52, 73, 94));
         btn_new_user.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btn_new_user.setForeground(new java.awt.Color(255, 255, 255));
         btn_new_user.setText("Add New User");
+        btn_new_user.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         btn_new_user.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn_new_userActionPerformed(evt);
             }
         });
 
+        btn_payments.setBackground(new java.awt.Color(52, 73, 94));
         btn_payments.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btn_payments.setForeground(new java.awt.Color(255, 255, 255));
         btn_payments.setText("Payment");
+        btn_payments.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         btn_payments.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn_paymentsActionPerformed(evt);
             }
         });
 
+        btn_report.setBackground(new java.awt.Color(52, 73, 94));
         btn_report.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btn_report.setForeground(new java.awt.Color(255, 255, 255));
         btn_report.setText("Report");
+        btn_report.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         btn_report.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn_reportActionPerformed(evt);
             }
         });
 
+        btn_emp_details.setBackground(new java.awt.Color(52, 73, 94));
         btn_emp_details.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btn_emp_details.setForeground(new java.awt.Color(255, 255, 255));
         btn_emp_details.setText("Employee Details");
+        btn_emp_details.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         btn_emp_details.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn_emp_detailsActionPerformed(evt);
@@ -158,7 +206,7 @@ public class Dashboard extends javax.swing.JFrame {
             .addGroup(lbl_dashboardLayout.createSequentialGroup()
                 .addGap(20, 20, 20)
                 .addGroup(lbl_dashboardLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btn_report, javax.swing.GroupLayout.PREFERRED_SIZE, 151, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btn_report, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 151, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(lbl_dashboardLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addComponent(btn_home, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btn_new_user, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -169,17 +217,17 @@ public class Dashboard extends javax.swing.JFrame {
         lbl_dashboardLayout.setVerticalGroup(
             lbl_dashboardLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(lbl_dashboardLayout.createSequentialGroup()
-                .addContainerGap(178, Short.MAX_VALUE)
-                .addComponent(btn_home)
-                .addGap(41, 41, 41)
-                .addComponent(btn_new_user)
-                .addGap(46, 46, 46)
-                .addComponent(btn_payments)
-                .addGap(39, 39, 39)
-                .addComponent(btn_emp_details)
-                .addGap(39, 39, 39)
-                .addComponent(btn_report)
-                .addGap(62, 62, 62))
+                .addGap(99, 99, 99)
+                .addComponent(btn_home, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(31, 31, 31)
+                .addComponent(btn_new_user, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(34, 34, 34)
+                .addComponent(btn_payments, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(34, 34, 34)
+                .addComponent(btn_emp_details, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(35, 35, 35)
+                .addComponent(btn_report, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(58, Short.MAX_VALUE))
         );
 
         lbl_home.add(lbl_dashboard, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 200, 530));
@@ -199,46 +247,110 @@ public class Dashboard extends javax.swing.JFrame {
 
         lbl_home.add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 0, 630, 50));
 
-        panel_home.setBackground(new java.awt.Color(215, 186, 242));
+        panel_home.setBackground(new java.awt.Color(248, 249, 249));
 
-        jLabel1.setText("jLabel1");
+        jTable1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        jTable1.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Customer Code", "Customer Name", "Contact Number", "Last Payment Date"
+            }
+        ));
+        jScrollPane1.setViewportView(jTable1);
+
+        jCheckBox1.setFont(new java.awt.Font("Trebuchet MS", 1, 12)); // NOI18N
+        jCheckBox1.setText("Customer Code");
+        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox1ActionPerformed(evt);
+            }
+        });
+
+        jCheckBox2.setFont(new java.awt.Font("Trebuchet MS", 1, 12)); // NOI18N
+        jCheckBox2.setText("Custoemr Name");
+        jCheckBox2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox2ActionPerformed(evt);
+            }
+        });
+
+        jTextField1.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        jTextField1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextField1ActionPerformed(evt);
+            }
+        });
+
+        jButton2.setBackground(new java.awt.Color(153, 204, 255));
+        jButton2.setFont(new java.awt.Font("Trebuchet MS", 1, 12)); // NOI18N
+        jButton2.setText("Search");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout panel_homeLayout = new javax.swing.GroupLayout(panel_home);
         panel_home.setLayout(panel_homeLayout);
         panel_homeLayout.setHorizontalGroup(
             panel_homeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panel_homeLayout.createSequentialGroup()
-                .addContainerGap(340, Short.MAX_VALUE)
-                .addComponent(jLabel1)
-                .addGap(251, 251, 251))
+            .addGroup(panel_homeLayout.createSequentialGroup()
+                .addGroup(panel_homeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panel_homeLayout.createSequentialGroup()
+                        .addGap(59, 59, 59)
+                        .addComponent(jButton2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(panel_homeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(panel_homeLayout.createSequentialGroup()
+                                .addComponent(jCheckBox1)
+                                .addGap(36, 36, 36)
+                                .addComponent(jCheckBox2))
+                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 318, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(panel_homeLayout.createSequentialGroup()
+                        .addGap(23, 23, 23)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 582, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(103, Short.MAX_VALUE))
         );
         panel_homeLayout.setVerticalGroup(
             panel_homeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panel_homeLayout.createSequentialGroup()
-                .addGap(91, 91, 91)
-                .addComponent(jLabel1)
-                .addContainerGap(377, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panel_homeLayout.createSequentialGroup()
+                .addGap(35, 35, 35)
+                .addGroup(panel_homeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE)
+                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(panel_homeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckBox1)
+                    .addComponent(jCheckBox2))
+                .addGap(41, 41, 41)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 293, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(46, Short.MAX_VALUE))
         );
 
         tab_home.addTab("", panel_home);
 
-        lbl_name.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbl_name.setText("Name");
+        panel_add_user.setBackground(new java.awt.Color(248, 249, 249));
 
-        lbl_address.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbl_address.setText("Address");
+        lbl_name.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_name.setText("Name                   :");
 
-        lbl_contact.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbl_contact.setText("Contact No");
+        lbl_address.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_address.setText("Address               :");
 
-        lbl_reg_date.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbl_reg_date.setText("Registration Date");
+        lbl_contact.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_contact.setText("Contact No          :");
 
-        lbl_weight.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbl_weight.setText("Weight (Kg)");
+        lbl_reg_date.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_reg_date.setText("Registration Date:");
 
-        lbl_height.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbl_height.setText("Height (Cm)");
+        lbl_weight.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_weight.setText("Weight (Kg)         :");
+
+        lbl_height.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_height.setText("Height (Cm)         :");
 
         txt_contact.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -254,8 +366,7 @@ public class Dashboard extends javax.swing.JFrame {
             }
         });
 
-        date_reg.setDateFormatString("dd-MM-YYYY");
-
+        btn_save.setBackground(new java.awt.Color(129, 251, 90));
         btn_save.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         btn_save.setText("Save");
         btn_save.addActionListener(new java.awt.event.ActionListener() {
@@ -264,6 +375,7 @@ public class Dashboard extends javax.swing.JFrame {
             }
         });
 
+        btn_reset.setBackground(new java.awt.Color(249, 200, 79));
         btn_reset.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         btn_reset.setText("Reset");
         btn_reset.addActionListener(new java.awt.event.ActionListener() {
@@ -286,38 +398,38 @@ public class Dashboard extends javax.swing.JFrame {
             panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panel_add_userLayout.createSequentialGroup()
                 .addGap(62, 62, 62)
-                .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lbl_customer_code_name)
-                    .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(lbl_name)
-                        .addComponent(lbl_address)
-                        .addComponent(lbl_contact)
-                        .addComponent(lbl_reg_date)
-                        .addComponent(lbl_weight)
-                        .addComponent(lbl_height)))
+                .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbl_name, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbl_address, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbl_contact, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbl_reg_date, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbl_weight, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbl_height, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbl_customer_code_name))
+                .addGap(37, 37, 37)
                 .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panel_add_userLayout.createSequentialGroup()
-                        .addGap(72, 72, 72)
-                        .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addGroup(panel_add_userLayout.createSequentialGroup()
-                                .addComponent(btn_reset)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btn_save))
-                            .addComponent(txt_name, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txt_address, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txt_contact, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(date_reg, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(txt_weight, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txt_height, javax.swing.GroupLayout.PREFERRED_SIZE, 270, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(label_validate_contact_No, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(22, Short.MAX_VALUE))
-                    .addGroup(panel_add_userLayout.createSequentialGroup()
-                        .addGap(37, 37, 37)
                         .addComponent(lbl_userCode, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lb_bmicalc, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(67, 67, 67))))
+                        .addGap(67, 67, 67))
+                    .addGroup(panel_add_userLayout.createSequentialGroup()
+                        .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(panel_add_userLayout.createSequentialGroup()
+                                .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(txt_name)
+                                    .addComponent(txt_address)
+                                    .addComponent(txt_contact)
+                                    .addComponent(txt_weight)
+                                    .addComponent(txt_height, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 270, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(39, 39, 39)
+                                .addComponent(label_validate_contact_No, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(panel_add_userLayout.createSequentialGroup()
+                                .addGap(30, 30, 30)
+                                .addComponent(btn_save, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(28, 28, 28)
+                                .addComponent(btn_reset, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         panel_add_userLayout.setVerticalGroup(
             panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -327,139 +439,46 @@ public class Dashboard extends javax.swing.JFrame {
                     .addComponent(lbl_customer_code_name)
                     .addComponent(lbl_userCode)
                     .addComponent(lb_bmicalc))
-                .addGap(51, 51, 51)
-                .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGap(53, 53, 53)
+                .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panel_add_userLayout.createSequentialGroup()
-                        .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(txt_name, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lbl_name))
+                        .addComponent(lbl_name)
+                        .addGap(36, 36, 36)
+                        .addComponent(lbl_address)
                         .addGap(36, 36, 36)
                         .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txt_address, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lbl_address))
-                        .addGap(32, 32, 32)
-                        .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txt_contact, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(lbl_contact)
-                            .addComponent(label_validate_contact_No))
-                        .addGap(34, 34, 34)
-                        .addComponent(date_reg, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(lbl_reg_date))
-                .addGap(30, 30, 30)
+                            .addComponent(label_validate_contact_No)))
+                    .addGroup(panel_add_userLayout.createSequentialGroup()
+                        .addComponent(txt_name, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(26, 26, 26)
+                        .addComponent(txt_address, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(26, 26, 26)
+                        .addComponent(txt_contact, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(16, 16, 16)
+                .addComponent(lbl_reg_date)
+                .addGap(36, 36, 36)
                 .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_weight, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txt_weight, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbl_weight))
-                .addGap(34, 34, 34)
+                .addGap(36, 36, 36)
                 .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_height, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txt_height, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbl_height))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(panel_add_userLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_reset)
-                    .addComponent(btn_save))
-                .addGap(23, 23, 23))
+                    .addComponent(btn_save, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btn_reset, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(25, Short.MAX_VALUE))
         );
 
         tab_home.addTab("", panel_add_user);
-
-        panel_payment.setBackground(new java.awt.Color(215, 186, 242));
-
-        jLabel2.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        jLabel2.setText("Customer Code");
-
-        select_userID.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
-        lbl_cus_name.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbl_cus_name.setText("Name");
-
-        txt_customer_name.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-
-        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        jLabel3.setText("Contact No");
-
-        lbl_last_pay_date.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbl_last_pay_date.setText("Last Payment Date");
-
-        lbl_pay_amount.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbl_pay_amount.setText("Payment Amount");
-
-        jButton1.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
-        jButton1.setText("Pay");
-
-        btn_reset_pay.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
-        btn_reset_pay.setText("Reset");
-        btn_reset_pay.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_reset_payActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout panel_paymentLayout = new javax.swing.GroupLayout(panel_payment);
-        panel_payment.setLayout(panel_paymentLayout);
-        panel_paymentLayout.setHorizontalGroup(
-            panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panel_paymentLayout.createSequentialGroup()
-                .addGap(46, 46, 46)
-                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl_last_pay_date, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(txt_customer_name, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(panel_paymentLayout.createSequentialGroup()
-                            .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(lbl_cus_name, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addComponent(jLabel3))
-                            .addGap(121, 121, 121)
-                            .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addGroup(panel_paymentLayout.createSequentialGroup()
-                                    .addComponent(btn_reset_pay)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jButton1))
-                                .addComponent(select_userID, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txt_contact_no, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(date_last_pay, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txt_pay_amount, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addComponent(lbl_pay_amount, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(143, Short.MAX_VALUE))
-        );
-        panel_paymentLayout.setVerticalGroup(
-            panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panel_paymentLayout.createSequentialGroup()
-                .addGap(62, 62, 62)
-                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(select_userID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(38, 38, 38)
-                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbl_cus_name)
-                    .addComponent(txt_customer_name, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(43, 43, 43)
-                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(txt_contact_no, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(49, 49, 49)
-                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl_last_pay_date)
-                    .addComponent(date_last_pay, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(53, 53, 53)
-                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbl_pay_amount)
-                    .addComponent(txt_pay_amount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 70, Short.MAX_VALUE)
-                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1)
-                    .addComponent(btn_reset_pay))
-                .addGap(43, 43, 43))
-        );
-
-        tab_home.addTab("", panel_payment);
 
         javax.swing.GroupLayout panel_reportLayout = new javax.swing.GroupLayout(panel_report);
         panel_report.setLayout(panel_reportLayout);
         panel_reportLayout.setHorizontalGroup(
             panel_reportLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 625, Short.MAX_VALUE)
+            .addGap(0, 708, Short.MAX_VALUE)
         );
         panel_reportLayout.setVerticalGroup(
             panel_reportLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -474,7 +493,7 @@ public class Dashboard extends javax.swing.JFrame {
         panel_employee.setLayout(panel_employeeLayout);
         panel_employeeLayout.setHorizontalGroup(
             panel_employeeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 625, Short.MAX_VALUE)
+            .addGap(0, 708, Short.MAX_VALUE)
         );
         panel_employeeLayout.setVerticalGroup(
             panel_employeeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -482,6 +501,162 @@ public class Dashboard extends javax.swing.JFrame {
         );
 
         tab_home.addTab("", panel_employee);
+
+        panel_payment.setBackground(new java.awt.Color(248, 249, 249));
+
+        jLabel2.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        jLabel2.setText("Customer Code      :");
+
+        select_userID.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        select_userID.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                select_userIDMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                select_userIDMousePressed(evt);
+            }
+        });
+        select_userID.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                select_userIDActionPerformed(evt);
+            }
+        });
+
+        lbl_cus_name.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_cus_name.setText("Name                       :");
+
+        txt_customer_name.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+
+        jLabel3.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        jLabel3.setText("Contact No              :");
+
+        txt_contact_no.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        txt_contact_no.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txt_contact_noActionPerformed(evt);
+            }
+        });
+
+        lbl_last_pay_date.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_last_pay_date.setText("Next Payment Date  :");
+
+        lbl_pay_amount.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_pay_amount.setText("Payment Amount    :");
+
+        txt_pay_amount.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+
+        jButton1.setBackground(new java.awt.Color(129, 251, 90));
+        jButton1.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        jButton1.setText("Payment");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        btn_reset_pay.setBackground(new java.awt.Color(249, 200, 79));
+        btn_reset_pay.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btn_reset_pay.setText("Reset");
+        btn_reset_pay.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_reset_payActionPerformed(evt);
+            }
+        });
+
+        lblPayAmount.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+
+        jXDatePicker2.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+
+        lbl_last_pay_date1.setFont(new java.awt.Font("Trebuchet MS", 1, 14)); // NOI18N
+        lbl_last_pay_date1.setText("Last Payment Date  :");
+
+        javax.swing.GroupLayout panel_paymentLayout = new javax.swing.GroupLayout(panel_payment);
+        panel_payment.setLayout(panel_paymentLayout);
+        panel_paymentLayout.setHorizontalGroup(
+            panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panel_paymentLayout.createSequentialGroup()
+                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(panel_paymentLayout.createSequentialGroup()
+                        .addGap(46, 46, 46)
+                        .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(panel_paymentLayout.createSequentialGroup()
+                                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(lbl_cus_name, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(jLabel3))
+                                .addGap(29, 29, 29))
+                            .addGroup(panel_paymentLayout.createSequentialGroup()
+                                .addComponent(lbl_pay_amount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGap(22, 22, 22))))
+                    .addGroup(panel_paymentLayout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(lbl_last_pay_date, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_last_pay_date1, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(22, 22, 22)))
+                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jXDatePicker1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txt_pay_amount, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txt_customer_name, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(select_userID, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txt_contact_no, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panel_paymentLayout.createSequentialGroup()
+                        .addGap(173, 173, 173)
+                        .addComponent(lblPayAmount, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(228, 228, 228))
+            .addGroup(panel_paymentLayout.createSequentialGroup()
+                .addGap(234, 234, 234)
+                .addComponent(btn_reset_pay, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(28, 28, 28)
+                .addComponent(jButton1)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(panel_paymentLayout.createSequentialGroup()
+                    .addGap(207, 207, 207)
+                    .addComponent(jXDatePicker2, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(329, Short.MAX_VALUE)))
+        );
+        panel_paymentLayout.setVerticalGroup(
+            panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panel_paymentLayout.createSequentialGroup()
+                .addGap(62, 62, 62)
+                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(select_userID, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2))
+                .addGap(20, 20, 20)
+                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txt_customer_name, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbl_cus_name))
+                .addGap(20, 20, 20)
+                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txt_contact_no, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
+                .addGap(33, 33, 33)
+                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbl_last_pay_date1)
+                    .addComponent(lblPayAmount, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_pay_amount)
+                    .addComponent(txt_pay_amount, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(23, 23, 23)
+                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jXDatePicker1, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbl_last_pay_date))
+                .addGap(18, 18, 18)
+                .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btn_reset_pay, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(73, Short.MAX_VALUE))
+            .addGroup(panel_paymentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(panel_paymentLayout.createSequentialGroup()
+                    .addGap(222, 222, 222)
+                    .addComponent(jXDatePicker2, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(231, Short.MAX_VALUE)))
+        );
+
+        tab_home.addTab("", panel_payment);
 
         lbl_home.add(tab_home, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 20, 630, 510));
 
@@ -509,7 +684,7 @@ public class Dashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_btn_new_userActionPerformed
 
     private void btn_paymentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_paymentsActionPerformed
-        tab_home.setSelectedIndex(2);
+        tab_home.setSelectedIndex(4);
     }//GEN-LAST:event_btn_paymentsActionPerformed
 
     private void btn_reportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_reportActionPerformed
@@ -517,27 +692,18 @@ public class Dashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_btn_reportActionPerformed
 
     private void btn_emp_detailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_emp_detailsActionPerformed
-        tab_home.setSelectedIndex(4);
+        tab_home.setSelectedIndex(2);
     }//GEN-LAST:event_btn_emp_detailsActionPerformed
 
     private void btn_resetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_resetActionPerformed
         txt_name.setText(null);
         txt_address.setText(null);
         txt_contact.setText(null);
-        date_reg.setDate(null);
+        //        date_reg.setDate(null);
         txt_weight.setText(null);
         txt_height.setText(null);
         lb_bmicalc.setText(null);
     }//GEN-LAST:event_btn_resetActionPerformed
-
-    private void btn_reset_payActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_reset_payActionPerformed
-        select_userID.setSelectedItem(null);
-        txt_address.setText(null);
-        txt_customer_name.setText(null);
-        txt_contact_no.setText(null);
-        date_last_pay.setDate(null);
-        txt_pay_amount.setText(null);
-    }//GEN-LAST:event_btn_reset_payActionPerformed
 
     private void btn_saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_saveActionPerformed
         String name = txt_name.getText();
@@ -545,7 +711,6 @@ public class Dashboard extends javax.swing.JFrame {
         String contact_No = txt_contact.getText();
 
         SimpleDateFormat Date_Format = new SimpleDateFormat("dd-MM-yyyy");
-        String reg_date = Date_Format.format(date_reg.getDate());
         String weight = txt_weight.getText();
         String height = txt_height.getText();
         String customer_code = lbl_userCode.getText();
@@ -556,7 +721,7 @@ public class Dashboard extends javax.swing.JFrame {
             pst.setString(2, name);
             pst.setString(3, address);
             pst.setString(4, contact_No);
-            pst.setString(5, reg_date);
+            pst.setDate(5, new Date(WIDTH));
             pst.setString(6, weight);
             pst.setString(7, height);
             pst.execute();
@@ -566,21 +731,141 @@ public class Dashboard extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, e);
         }
 
-
     }//GEN-LAST:event_btn_saveActionPerformed
+
+    private void txt_contactKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_contactKeyReleased
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txt_contactKeyReleased
+
+    private void txt_contactKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_contactKeyPressed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txt_contactKeyPressed
 
     private void txt_contactActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txt_contactActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txt_contactActionPerformed
 
-    private void txt_contactKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_contactKeyPressed
-        // TODO add your handling code here:
+    private void btn_reset_payActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_reset_payActionPerformed
+        txt_customer_name.setText("");
+        txt_contact_no.setText("");
+        lblPayAmount.setText("");
+        txt_pay_amount.setText("");
 
-    }//GEN-LAST:event_txt_contactKeyPressed
+    }//GEN-LAST:event_btn_reset_payActionPerformed
 
-    private void txt_contactKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_contactKeyReleased
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
+        LocalDateTime now = LocalDateTime.now();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        final String stringDate = dateFormat.format(jXDatePicker1.getDate());
+        final java.sql.Date sqlDate = java.sql.Date.valueOf(stringDate);
+
+        LocalDate localDate = LocalDate.now();
+        System.out.println();
+        try {
+            String sql = "Insert into customer_payment (CUSTOMER_CODE,PAYMENT_DATE,PAY_AMOUNT,NEXT_PAYMENT_DATE ) values(?,?,?,?)";
+            pst = conn.prepareStatement(sql);
+
+            pst.setString(1, select_userID.getSelectedItem() + "");
+            pst.setDate(2, new Date(System.currentTimeMillis()));
+            pst.setDouble(3, Double.parseDouble(txt_pay_amount.getText()));
+            pst.setDate(4, sqlDate);
+            pst.execute();
+            JOptionPane.showMessageDialog(null, "Create Payment Successfully");
+            txt_customer_name.setText("");
+            txt_contact_no.setText("");
+            lblPayAmount.setText("");
+            txt_pay_amount.setText("");
+            jXDatePicker2.setDate(null);
+        } catch (SQLException ex) {
+            Logger.getLogger(Dashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void select_userIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_select_userIDActionPerformed
+        ++data;
+        if (data > 1) {
+            try {
+                String Sql = "select *from gym_customer inner join customer_payment on gym_customer.CUSTOMER_CODE=customer_payment.CUSTOMER_CODE   where gym_customer.CUSTOMER_CODE= '" + select_userID.getSelectedItem() + "'  order by customer_payment.ID_PAYMENY desc limit 1";
+                pst = conn.prepareStatement(Sql);
+                rs = pst.executeQuery();
+                while (rs.next()) {
+                    txt_customer_name.setText(rs.getString("CUSTOMER_NAME"));
+                    txt_contact_no.setText(rs.getString("CUSTOMER_MOBILE_NO"));
+                    lblPayAmount.setText("R : " + rs.getString("PAY_AMOUNT"));
+                    String date = rs.getString("PAYMENT_DATE");
+                    java.sql.Date sqlDate = java.sql.Date.valueOf(date);
+                    jXDatePicker2.setDate(sqlDate);
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(Dashboard.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_select_userIDActionPerformed
+
+    private void select_userIDMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_select_userIDMouseClicked
+
+    }//GEN-LAST:event_select_userIDMouseClicked
+
+    private void select_userIDMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_select_userIDMousePressed
+    }//GEN-LAST:event_select_userIDMousePressed
+
+    private void txt_contact_noActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txt_contact_noActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_txt_contactKeyReleased
+    }//GEN-LAST:event_txt_contact_noActionPerformed
+
+    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jCheckBox1ActionPerformed
+
+    private void jCheckBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox2ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jCheckBox2ActionPerformed
+
+    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jTextField1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        if (jTextField1.getText().equals("")) {
+            tableModel = (DefaultTableModel) jTable1.getModel();
+            tableModel.setRowCount(0);
+            loadpaymentDetails();
+
+        } else {
+            tableModel = (DefaultTableModel) jTable1.getModel();
+            tableModel.setRowCount(0);
+//        Object singleBrnach1[] = {};
+//        tableModel.insertRow(0, singleBrnach1);
+            Date date2;
+            Date date1;
+            try {
+                String Sql = "select *from gym_customer inner join customer_payment on gym_customer.CUSTOMER_CODE=customer_payment.CUSTOMER_CODE where customer_payment.CUSTOMER_CODE='" + jTextField1.getText() + "'";
+                pst = conn.prepareStatement(Sql);
+                rs = pst.executeQuery();
+                while (rs.next()) {
+                    date1 = new Date(System.currentTimeMillis());
+                    date2 = rs.getDate("NEXT_PAYMENT_DATE");
+                    long ss = date2.getTime() - date1.getTime();
+                    long convert = TimeUnit.DAYS.convert(ss, TimeUnit.MILLISECONDS);
+                    if (convert <= 10 && convert >= 0) {
+                        tableModel = (DefaultTableModel) jTable1.getModel();
+                        Object singleBrnach[] = {
+                            rs.getString("CUSTOMER_CODE"),
+                            rs.getString("CUSTOMER_NAME"),
+                            rs.getString("CUSTOMER_MOBILE_NO"),
+                            rs.getDate("PAYMENT_DATE"),};
+                        tableModel.insertRow(0, singleBrnach);
+
+                    }
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(Dashboard.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -627,15 +912,21 @@ public class Dashboard extends javax.swing.JFrame {
     private javax.swing.JButton btn_reset;
     private javax.swing.JButton btn_reset_pay;
     private javax.swing.JButton btn_save;
-    private com.toedter.calendar.JDateChooser date_last_pay;
-    private com.toedter.calendar.JDateChooser date_reg;
     private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JCheckBox jCheckBox2;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
+    private javax.swing.JTextField jTextField1;
+    private org.jdesktop.swingx.JXDatePicker jXDatePicker1;
+    private org.jdesktop.swingx.JXDatePicker jXDatePicker2;
     private javax.swing.JLabel label_validate_contact_No;
     private javax.swing.JLabel lb_bmicalc;
+    private javax.swing.JLabel lblPayAmount;
     private javax.swing.JLabel lbl_address;
     private javax.swing.JLabel lbl_contact;
     private javax.swing.JLabel lbl_cus_name;
@@ -644,6 +935,7 @@ public class Dashboard extends javax.swing.JFrame {
     private javax.swing.JLabel lbl_height;
     private javax.swing.JPanel lbl_home;
     private javax.swing.JLabel lbl_last_pay_date;
+    private javax.swing.JLabel lbl_last_pay_date1;
     private javax.swing.JLabel lbl_name;
     private javax.swing.JLabel lbl_pay_amount;
     private javax.swing.JLabel lbl_reg_date;
@@ -665,4 +957,34 @@ public class Dashboard extends javax.swing.JFrame {
     private javax.swing.JTextField txt_pay_amount;
     private javax.swing.JTextField txt_weight;
     // End of variables declaration//GEN-END:variables
+DefaultTableModel tableModel = null;
+
+    private void loadpaymentDetails() {
+        Date date2;
+        Date date1;
+
+        try {
+            String Sql = "select *from gym_customer inner join customer_payment on gym_customer.CUSTOMER_CODE=customer_payment.CUSTOMER_CODE";
+            pst = conn.prepareStatement(Sql);
+            rs = pst.executeQuery();
+            while (rs.next()) {
+                date1 = new Date(System.currentTimeMillis());
+                date2 = rs.getDate("NEXT_PAYMENT_DATE");
+                long ss = date2.getTime() - date1.getTime();
+                long convert = TimeUnit.DAYS.convert(ss, TimeUnit.MILLISECONDS);
+                if (convert <= 10 && convert >= 0) {
+                    tableModel = (DefaultTableModel) jTable1.getModel();
+                    Object singleBrnach[] = {
+                        rs.getString("CUSTOMER_CODE"),
+                        rs.getString("CUSTOMER_NAME"),
+                        rs.getString("CUSTOMER_MOBILE_NO"),
+                        rs.getDate("PAYMENT_DATE"),};
+                    tableModel.insertRow(0, singleBrnach);
+
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Dashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 }
