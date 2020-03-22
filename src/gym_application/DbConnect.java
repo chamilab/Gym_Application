@@ -15,7 +15,7 @@ public class DbConnect {
     public static Connection DbConnect(){
         try{
          Class.forName("com.mysql.jdbc.Driver");
-         java.sql.Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/gymdb","root","root");
+         java.sql.Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/gymdb","root","1234");
          return conn;
         }
         catch(Exception e)
